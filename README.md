@@ -1,5 +1,5 @@
 # j2rs
-J2rs is a parsed to convert java classes to Rust abstractions.
+J2rs is a parser to convert Java classes to Rust abstractions.
 For a class to be converted, it must be available as a source file, and must be on the ClassPath.
 
 ## Licence
