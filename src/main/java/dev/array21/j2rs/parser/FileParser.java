@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -20,11 +21,12 @@ public class FileParser {
 	 * @param f The file to parse
 	 * @return A Pair containing the parsed ClassDescriptor and an array of UnparsedMethodDescriptor
 	 */
-	public static Pair<ClassDescriptor, UnparsedMethodDescriptor[]> parseFile(File f) throws IOException {
+	public static Pair<ClassIdentifier, UnparsedMethodDescriptor[]> parseFile(File f) throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader(f));
 			
 		AtomicReference<String> packageName = new AtomicReference<>();
 		AtomicReference<String> className = new AtomicReference<>();
+		AtomicReference<String[]> generics = new AtomicReference<>(new String[0]);
 		
 		AtomicBoolean inComment = new AtomicBoolean(false);
 		
@@ -67,6 +69,12 @@ public class FileParser {
 						.trim();
 				
 				String[] parts = partiallyCleanedName.split(Pattern.quote(" "));
+				String classNameMaybeGeneric = parts[0];
+				if(classNameMaybeGeneric.contains("<")) {
+					Pattern genericsPat = Pattern.compile("<(.*)>");
+					generics.set(genericsPat.matcher(classNameMaybeGeneric).group(1).split(Pattern.quote(",")));
+				}
+				
 				className.set(parts[0]);
 				return;
 			}
@@ -102,12 +110,13 @@ public class FileParser {
 				methodName = String.format("%s_%d", methodName, occurenceCount);
 			}
 			
-			UnparsedMethodDescriptor mc = new UnparsedMethodDescriptor(methodName, method.getReturnType().getName(), params);
+			UnparsedMethodDescriptor mc = new UnparsedMethodDescriptor(Modifier.isStatic(method.getModifiers()), methodName, method.getReturnType().getName(), params);
 			methodCalls.put(methodName, mc);
 		}
 		
 		UnparsedMethodDescriptor[] methodCallArr = methodCalls.values().toArray(new UnparsedMethodDescriptor[0]);
-		ClassDescriptor cd = new ClassDescriptor(packageName.get(), className.get());
+		
+		ClassIdentifier cd = new ClassIdentifier(packageName.get(), className.get(), generics.get());
 		return new Pair<>(cd, methodCallArr);
 	}
 }

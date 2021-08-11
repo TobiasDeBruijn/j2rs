@@ -1,4 +1,4 @@
-package dev.array21.j2rs.parser;
+package dev.array21.j2rs.generator;
 
 /**
  * Process method names to convert them to be more Rust-like

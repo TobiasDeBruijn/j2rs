@@ -2,15 +2,20 @@ package dev.array21.j2rs;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import dev.array21.j2rs.exceptions.NoArgumentException;
 import dev.array21.j2rs.exceptions.NoArgumentValueException;
+import dev.array21.j2rs.generator.NameProcessor;
 import dev.array21.j2rs.parser.ClassDescriptor;
+import dev.array21.j2rs.parser.ClassIdentifier;
 import dev.array21.j2rs.parser.FileParser;
-import dev.array21.j2rs.parser.NameProcessor;
 import dev.array21.j2rs.parser.UnparsedMethodDescriptor;
 import dev.array21.j2rs.parser.Parameter;
 import dev.array21.j2rs.parser.ParameterParser;
+import dev.array21.j2rs.parser.ParsedMethodDescriptor;
+import dev.array21.j2rs.parser.ReturnType;
 import dev.array21.j2rs.parser.Signature;
 import dev.array21.j2rs.parser.SignatureBuilder;
 
@@ -54,13 +59,15 @@ public class J2rs {
 		}
 		
 		if(f.isFile()) {
-			Pair<ClassDescriptor, UnparsedMethodDescriptor[]> parsed;
+			Pair<ClassIdentifier, UnparsedMethodDescriptor[]> parsed;
 			try {
 				parsed = FileParser.parseFile(f);
 			} catch(IOException e) {
 				e.printStackTrace();
 				return;
 			}
+		
+			List<ParsedMethodDescriptor> pmdList = new ArrayList<>();
 			
 			System.out.println(String.format("Method & Signatures in %s.%s:", parsed.a().packageName(), parsed.a().className()));
 			for(UnparsedMethodDescriptor mCall : parsed.b()) {
@@ -69,7 +76,12 @@ public class J2rs {
 				
 				Signature sig = SignatureBuilder.buildSignature(retType, params);
 				System.out.println(String.format("%s: %s", NameProcessor.toSnakeCase(mCall.name()), sig.sig()));
+				
+				ParsedMethodDescriptor pmd = new ParsedMethodDescriptor(mCall.isStatic(), mCall.name(), sig.sig(), ReturnType.fromString(sig.sig()), mCall);
+				pmdList.add(pmd);
 			}
+			
+			ClassDescriptor cd = new ClassDescriptor(parsed.a().packageName(), parsed.a().className(), pmdList.toArray(new ParsedMethodDescriptor[0]), parsed.a().generics());
 		}
 	}
 	
