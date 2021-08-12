@@ -1,7 +1,3 @@
-.gradle/
-.settings/
-bin/
-build/
-
-.classpath
-.project
+.idea/
+target/
+Cargo.lock
